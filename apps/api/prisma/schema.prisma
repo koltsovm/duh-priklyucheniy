@@ -41,21 +41,23 @@ model Session {
 
 // Маршрут мотопутешествия. Self-publish в каталог (status=PUBLISHED).
 model Route {
-  id           String      @id @default(uuid())
+  id           String   @id @default(uuid())
   authorId     String
-  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   title        String
-  slug         String      @unique // SEO-адрес, напр. /routes/altai-2024
+  slug         String   @unique // SEO-адрес, напр. /routes/altai-2024
   description  String
-  difficulty   Difficulty
+  // Значения: easy | medium | hard | extreme (SQLite не поддерживает enums)
+  difficulty   String   @default("medium")
   region       String?
   distanceKm   Float?
   durationDays Int?
-  status       RouteStatus @default(PUBLISHED)
-  viewCount    Int         @default(0)
-  publishedAt  DateTime    @default(now())
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  // Значения: DRAFT | PUBLISHED | MODERATION
+  status       String   @default("PUBLISHED")
+  viewCount    Int      @default(0)
+  publishedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   waypoints    Waypoint[]
   photos       RoutePhoto[]
 
@@ -67,9 +69,9 @@ model Route {
 
 // Точки маршрута. Уже сейчас есть lat/lng — фундамент для Yandex Maps.
 model Waypoint {
-  id      String  @id @default(uuid())
+  id      String @id @default(uuid())
   routeId String
-  route   Route   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
   order   Int
   name    String
   lat     Float?
@@ -88,19 +90,4 @@ model RoutePhoto {
   order   Int
 
   @@unique([routeId, order])
-}
-
-enum Difficulty {
-  EASY
-  MEDIUM
-  HARD
-  EXTREME
-}
-
-// Статусы зарезервированы заранее: self-publish сейчас,
-// модерация добавится без миграции данных.
-enum RouteStatus {
-  DRAFT
-  PUBLISHED
-  MODERATION
 }
