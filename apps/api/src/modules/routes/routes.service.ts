@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../db/prisma";
 import { ApiError } from "../../lib/errors";
 import { slugify } from "../../lib/slugify";
-import type { RouteCreateInput, RouteUpdateInput, RouteQuery } from "@duh/shared";
+import type { RouteCreateInput, RouteUpdateInput, RouteQueryParsed } from "@duh/shared";
 
 const ROUTE_INCLUDE = {
   author: { select: { id: true, name: true } },
@@ -52,12 +52,10 @@ async function uniqueSlug(title: string): Promise<string> {
 
 /* ---------- Публичный каталог ---------- */
 
-export async function listPublished(query: RouteQuery) {
+export async function listPublished(query: RouteQueryParsed) {
   const where: Prisma.RouteWhereInput = {
     status: "PUBLISHED",
-    ...(query.difficulty
-      ? { difficulty: query.difficulty.toUpperCase() as Prisma.EnumDifficultyFilter }
-      : {}),
+    ...(query.difficulty ? { difficulty: query.difficulty } : {}),
     ...(query.region ? { region: query.region } : {}),
   };
 
@@ -142,7 +140,7 @@ function routeDataPayload(input: RouteCreateInput | RouteUpdateInput): RouteData
   return {
     title: input.title ?? "",
     description: input.description ?? "",
-    difficulty: (input.difficulty?.toUpperCase() ?? "MEDIUM") as RouteData["difficulty"],
+    difficulty: input.difficulty ?? "medium",
     region: input.region ?? null,
     distanceKm: input.distanceKm ?? null,
     durationDays: input.durationDays ?? null,

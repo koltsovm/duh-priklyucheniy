@@ -19,7 +19,11 @@ ensureUploadDirs();
 export const uploadPhotos: RequestHandler = multer({
   storage: multer.diskStorage({
     destination(req: Request, _file, cb) {
-      const routeId = (req as any).route?.id ?? "tmp";
+      // req.routeId устанавливается middleware loadOwnedRoute
+      const routeId = (req as any).routeId;
+      if (!routeId) {
+        return cb(new Error("Не удалось определить маршрут для загрузки"));
+      }
       const dir = path.join(env.UPLOAD_DIR, routeId);
       fs.mkdirSync(dir, { recursive: true });
       cb(null, dir);

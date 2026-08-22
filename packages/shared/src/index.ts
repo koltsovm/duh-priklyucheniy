@@ -92,8 +92,9 @@ export const routeQuerySchema = z.object({
   region: z.string().trim().max(120).optional(),
   sort: z.enum(["newest", "popular", "longest"]).default("newest"),
 });
-export type RouteQuery = z.infer<typeof routeQuerySchema>;
-export type RouteSort = RouteQuery["sort"];
+export type RouteQuery = z.input<typeof routeQuerySchema>;
+export type RouteQueryParsed = z.infer<typeof routeQuerySchema>;
+export type RouteSort = RouteQueryParsed["sort"];
 
 /* ---------- DTO маршрута ---------- */
 export const waypointDtoSchema = z.object({
