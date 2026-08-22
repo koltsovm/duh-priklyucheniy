@@ -22,7 +22,7 @@ export const uploadPhotos: RequestHandler = multer({
       // req.routeId устанавливается middleware loadOwnedRoute
       const routeId = (req as any).routeId;
       if (!routeId) {
-        return cb(new Error("Не удалось определить маршрут для загрузки"));
+        return cb(new Error("Не удалось определить маршрут для загрузки"), "");
       }
       const dir = path.join(env.UPLOAD_DIR, routeId);
       fs.mkdirSync(dir, { recursive: true });
