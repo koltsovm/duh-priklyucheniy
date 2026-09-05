@@ -111,6 +111,7 @@ export const routePhotoDtoSchema = z.object({
   id: z.string(),
   url: z.string(),
   order: z.number().int(),
+  isCover: z.boolean().optional(),
 });
 export type RoutePhotoDto = z.infer<typeof routePhotoDtoSchema>;
 
