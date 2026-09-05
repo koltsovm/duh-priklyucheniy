@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { fetchApi } from "@/lib/api-server";
-import { RouteCard } from "@/components/RouteCard";
+import { RouteCard, RouteCardSkeleton } from "@/components/RouteCard";
 import type { RouteListResponse } from "@duh/shared";
 
 // Главная — статическая с revalidate (новые маршруты появятся в течение 60с)
@@ -14,10 +14,12 @@ export default async function HomePage() {
     // API ещё поднимается — показываем заголовок без маршрутов
   }
 
+  const showSkeletons = latest.items.length === 0;
+
   return (
     <div>
-      <section className="hero">
-        <h1>
+      <section className="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title">
           Найди свой <span>Дух приключений</span>
         </h1>
         <p>
@@ -35,17 +37,26 @@ export default async function HomePage() {
       </section>
 
       {latest.items.length > 0 && (
-        <section>
-          <h2 className="page-title">Свежие маршруты</h2>
-          <div className="grid">
-            {latest.items.map((route) => (
-              <RouteCard key={route.id} route={route} />
-            ))}
-          </div>
-          <div style={{ textAlign: "center", marginTop: 24 }}>
+        <section aria-labelledby="latest-title">
+          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+            <h2 id="latest-title" className="page-title" style={{ marginBottom: 0 }}>Свежие маршруты</h2>
             <Link href="/catalog" className="btn btn-secondary">
               Весь каталог →
             </Link>
+          </header>
+          <div className="grid" role="list" aria-label="Свежие маршруты">
+            {latest.items.map((route, index) => (
+              <RouteCard key={route.id} route={route} priority={index < 3} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {showSkeletons && (
+        <section aria-labelledby="latest-title" aria-busy="true">
+          <h2 id="latest-title" className="page-title" style={{ marginBottom: 24 }}>Свежие маршруты</h2>
+          <div className="grid" role="list" aria-label="Загрузка маршрутов">
+            {[1, 2, 3].map((i) => <RouteCardSkeleton key={i} />)}
           </div>
         </section>
       )}
