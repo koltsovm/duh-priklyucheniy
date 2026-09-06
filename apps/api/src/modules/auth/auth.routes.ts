@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import {
   loginSchema,
   refreshResponseSchema,
@@ -56,7 +56,7 @@ const logout: RequestHandler = asyncHandler(async (req, res) => {
 });
 
 const me: RequestHandler = asyncHandler(async (req, res) => {
-  const user = await authService.getUserById((req as any).user.id);
+  const user = await authService.getUserById(req.user!.id);
   if (!user) return res.status(404).json({ error: "Пользователь не найден" });
   res.json({ user: toUserDto(user) });
 });

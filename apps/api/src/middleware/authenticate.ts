@@ -12,6 +12,6 @@ export const authenticate: RequestHandler = (req, res, next) => {
   if (!userId) {
     return res.status(401).json({ error: "Недействительный или истёкший токен" });
   }
-  (req as any).user = { id: userId };
+  req.user = { id: userId };
   next();
 };

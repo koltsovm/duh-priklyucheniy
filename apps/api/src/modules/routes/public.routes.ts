@@ -11,7 +11,7 @@ publicRoutesRouter.get(
   "/",
   validate(routeQuerySchema, "query"),
   asyncHandler(async (req, res) => {
-    const result = await routeService.listPublished((req as any).query);
+    const result = await routeService.listPublished(req.query);
     res.json(result);
   }),
 );
