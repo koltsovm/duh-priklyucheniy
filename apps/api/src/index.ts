@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./types/express";
 import { env } from "./config/env";
 import { createApp } from "./app";
 import { prisma } from "./db/prisma";

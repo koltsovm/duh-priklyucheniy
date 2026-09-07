@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../db/prisma";
 import { ApiError } from "../../lib/errors";
 import { slugify } from "../../lib/slugify";
-import type { RouteCreateInput, RouteUpdateInput, RouteQueryParsed } from "@duh/shared";
+import type { RouteCreateInput, RouteUpdateInput, RouteQueryParsed, RouteDto, RouteListResponse, UserRoutesListResponse } from "@duh/shared";
 
 const ROUTE_INCLUDE = {
   author: { select: { id: true, name: true } },
@@ -12,13 +12,15 @@ const ROUTE_INCLUDE = {
 
 type RouteWithRelations = Prisma.RouteGetPayload<{ include: typeof ROUTE_INCLUDE }>;
 
-export function toRouteDto(route: RouteWithRelations) {
+import type { Difficulty } from "@duh/shared";
+
+export function toRouteDto(route: RouteWithRelations): RouteDto {
   return {
     id: route.id,
     slug: route.slug,
     title: route.title,
     description: route.description,
-    difficulty: route.difficulty.toLowerCase(),
+    difficulty: route.difficulty.toLowerCase() as Difficulty,
     region: route.region,
     distanceKm: route.distanceKm,
     durationDays: route.durationDays,
@@ -35,7 +37,7 @@ export function toRouteDto(route: RouteWithRelations) {
       lng: w.lng,
       note: w.note,
     })),
-    photos: route.photos.map((p) => ({ id: p.id, url: p.url, order: p.order })),
+    photos: route.photos.map((p) => ({ id: p.id, url: p.url, order: p.order, isCover: false })),
   };
 }
 
@@ -52,7 +54,7 @@ async function uniqueSlug(title: string): Promise<string> {
 
 /* ---------- Публичный каталог ---------- */
 
-export async function listPublished(query: RouteQueryParsed) {
+export async function listPublished(query: RouteQueryParsed): Promise<RouteListResponse> {
   const where: Prisma.RouteWhereInput = {
     status: "PUBLISHED",
     ...(query.difficulty ? { difficulty: query.difficulty } : {}),
@@ -90,7 +92,7 @@ export async function listPublished(query: RouteQueryParsed) {
 
 const routeNotFound = new ApiError(404, "Маршрут не найден");
 
-export async function getBySlug(slug: string) {
+export async function getBySlug(slug: string): Promise<RouteDto> {
   const route = await prisma.route.findFirst({
     where: { slug, status: "PUBLISHED" },
     include: ROUTE_INCLUDE,
@@ -107,7 +109,7 @@ export async function getBySlug(slug: string) {
 
 /* ---------- Личный кабинет ---------- */
 
-export async function listMine(authorId: string) {
+export async function listMine(authorId: string): Promise<UserRoutesListResponse> {
   const routes = await prisma.route.findMany({
     where: { authorId },
     include: ROUTE_INCLUDE,
@@ -116,7 +118,7 @@ export async function listMine(authorId: string) {
   return routes.map(toRouteDto);
 }
 
-export async function getMine(authorId: string, id: string) {
+export async function getMine(authorId: string, id: string): Promise<RouteDto> {
   const route = await prisma.route.findFirst({
     where: { id, authorId },
     include: ROUTE_INCLUDE,
@@ -146,7 +148,7 @@ function routeDataPayload(input: RouteCreateInput | RouteUpdateInput): RouteData
     durationDays: input.durationDays ?? null,
   };
 }
-export async function createMine(authorId: string, input: RouteCreateInput) {
+export async function createMine(authorId: string, input: RouteCreateInput): Promise<RouteDto> {
   const slug = await uniqueSlug(input.title);
   const route = await prisma.route.create({
     data: {
@@ -168,7 +170,7 @@ export async function createMine(authorId: string, input: RouteCreateInput) {
   return toRouteDto(route);
 }
 
-export async function updateMine(authorId: string, id: string, input: RouteUpdateInput) {
+export async function updateMine(authorId: string, id: string, input: RouteUpdateInput): Promise<RouteDto> {
   const existing = await prisma.route.findFirst({ where: { id, authorId } });
   if (!existing) throw routeNotFound;
 
@@ -195,7 +197,7 @@ export async function updateMine(authorId: string, id: string, input: RouteUpdat
   return toRouteDto(route);
 }
 
-export async function deleteMine(authorId: string, id: string) {
+export async function deleteMine(authorId: string, id: string): Promise<void> {
   const existing = await prisma.route.findFirst({ where: { id, authorId } });
   if (!existing) throw routeNotFound;
   await prisma.route.delete({ where: { id } });
@@ -204,7 +206,7 @@ export async function deleteMine(authorId: string, id: string) {
 /* ---------- Фото ---------- */
 
 /** Добавляет фото (url вида /uploads/<routeId>/<file>). */
-export async function addPhotos(authorId: string, routeId: string, files: Express.Multer.File[]) {
+export async function addPhotos(authorId: string, routeId: string, files: Express.Multer.File[]): Promise<RouteDto> {
   const route = await prisma.route.findFirst({ where: { id: routeId, authorId } });
   if (!route) throw routeNotFound;
 

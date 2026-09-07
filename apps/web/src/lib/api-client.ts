@@ -1,5 +1,7 @@
 "use client";
 
+import { ApiError } from "@duh/shared";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
 
 const TOKEN_KEY = "duh_access_token";
@@ -18,16 +20,6 @@ export function setAccessToken(token: string | null) {
 
 export function getAccessToken() {
   return accessToken;
-}
-
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
 }
 
 /** Клиентский fetch с Bearer-токеном и авто-refresh при 401. */

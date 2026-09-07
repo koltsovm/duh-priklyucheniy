@@ -6,6 +6,17 @@ import { z } from "zod";
  * для web (Next.js) и api (Express).
  * ========================================================= */
 
+/* ---------- Branded ID types ---------- */
+export type Brand<T, B> = T & { __brand: B };
+
+export type UserId = Brand<string, "UserId">;
+export type RouteId = Brand<string, "RouteId">;
+export type SessionId = Brand<string, "SessionId">;
+export type WaypointId = Brand<string, "WaypointId">;
+export type PhotoId = Brand<string, "PhotoId">;
+
+export * from "./express";
+
 /* ---------- Сложность маршрута ---------- */
 export const difficultySchema = z.enum(["easy", "medium", "hard", "extreme"], {
   errorMap: () => ({ message: "Недопустимое значение сложности" }),
@@ -41,7 +52,7 @@ export const userDtoSchema = z.object({
   email: z.string(),
   name: z.string(),
   avatarUrl: z.string().nullable(),
-  createdAt: z.string(),
+  createdAt: z.string().datetime(),
 });
 export type UserDto = z.infer<typeof userDtoSchema>;
 
@@ -59,9 +70,9 @@ export type RefreshResponse = z.infer<typeof refreshResponseSchema>;
 /* ---------- Маршруты ---------- */
 export const waypointInputSchema = z.object({
   name: z.string().trim().min(1, "Укажите название точки").max(120, "Название слишком длинное"),
-  lat: z.number().min(-90).max(90).optional().nullable(),
-  lng: z.number().min(-180).max(180).optional().nullable(),
-  note: z.string().trim().max(500, "Примечание слишком длинное").optional().nullable(),
+  lat: z.number().min(-90).max(90).nullable(),
+  lng: z.number().min(-180).max(180).nullable(),
+  note: z.string().trim().max(500, "Примечание слишком длинное").nullable(),
 });
 export type WaypointInput = z.infer<typeof waypointInputSchema>;
 
@@ -111,7 +122,7 @@ export const routePhotoDtoSchema = z.object({
   id: z.string(),
   url: z.string(),
   order: z.number().int(),
-  isCover: z.boolean().optional(),
+  isCover: z.boolean(),
 });
 export type RoutePhotoDto = z.infer<typeof routePhotoDtoSchema>;
 
@@ -125,9 +136,9 @@ export const routeDtoSchema = z.object({
   distanceKm: z.number().nullable(),
   durationDays: z.number().int().nullable(),
   viewCount: z.number().int(),
-  publishedAt: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  publishedAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
   author: z.object({ id: z.string(), name: z.string() }),
   waypoints: z.array(waypointDtoSchema).default([]),
   photos: z.array(routePhotoDtoSchema).default([]),
@@ -151,3 +162,18 @@ export type UserRoutesListResponse = z.infer<typeof userRoutesListResponseSchema
 /* ---------- Точки (waypoints) — почва для карт ---------- */
 /* Уже сейчас храним lat/lng (опционально), чтобы позже
  * интеграция Yandex Maps легла на готовую модель данных. */
+
+/* ---------- Ошибки API ---------- */
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof ApiError;
+}
